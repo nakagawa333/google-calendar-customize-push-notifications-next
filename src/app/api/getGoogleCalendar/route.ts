@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { type NextRequest } from 'next/server'
 
 import {google, calendar_v3} from 'googleapis'
+import axios from 'axios';
 
 const SCOPES:string = 'https://www.googleapis.com/auth/calendar';
 const GOOGLE_PRIVATE_KEY:string = process.env.NEXT_PUBLIC_PRIVATE_KEY? process.env.NEXT_PUBLIC_PRIVATE_KEY.replace(/\\n/g, '\n') :"";
@@ -15,16 +16,16 @@ export async function GET(request: NextRequest){
     const searchParams:URLSearchParams = request.nextUrl.searchParams;
     let timeMin:any = searchParams.get("timeMin");
     let calendar:calendar_v3.Calendar | undefined = googleCalendarAuth();
-    
+
     let methodOptions = {
         calendarId: GOOGLE_CALENDAR_ID,
         timeMin:timeMin,
         maxResults: 250,
         singleEvents: false,
-        orderBy: 'updated'          
+        orderBy: 'updated'
     }
     let events;
-    
+
     try{
         events = await calendar.events.list(methodOptions);
     } catch(error:any){
@@ -57,33 +58,19 @@ export async function GET(request: NextRequest){
                 summary:event.summary,
                 eventType:event.eventType,
                 startDate:startDate,
-                endDate:endDate            
+                endDate:endDate
             });
         }
     }
-    
-    let taskList = await googleTasksAuth();
-    //TODO タスクリストを取得する処理
-    let tasklists = await taskList.tasklists.list({maxResults:100});
-    let items = tasklists.data.items;
-    console.info("タスクリスト",items);
 
-    let tasks = await googleTasksAuth();
-
-    if(items){
-        for(let item of items){
-            let param:any = {
-                tasklist:item.id,
-                showCompleted:false,
-                dueMin:timeMin
-            }
-            let task = await tasks.tasks.list(param);
-            console.info("これはタスクです",task);
-        }
-    }
+    //Google task取得処理
+    let reqUrl:string = `https://script.google.com/macros/s/${process.env.NEXT_PUBLIC_GET_GOOGLE_TASKS_API_ID}/exec`;
+    const res = await axios.get(reqUrl);
+    let tasks = res.data?.tasks;
 
     let response = {
-        "events":eventItems
+        "events":eventItems,
+        "tasks":tasks
     }
 
     //TODO 取得したタスクIDから、タスクを取得
@@ -99,9 +86,9 @@ const googleCalendarAuth = () => {
     let calendar:calendar_v3.Calendar;
     try{
         const jwtClient = new google.auth.JWT(
-            GOOGLE_CLIENT_EMAIL, 
-            undefined, 
-            GOOGLE_PRIVATE_KEY, 
+            GOOGLE_CLIENT_EMAIL,
+            undefined,
+            GOOGLE_PRIVATE_KEY,
             SCOPES);
         calendar = google.calendar({
             version: 'v3',
@@ -115,30 +102,4 @@ const googleCalendarAuth = () => {
     }
 
     return calendar;
-}
-
-/**
- * Googleタスクの認証を行う
- * @returns 
- */
-const googleTasksAuth = async() => {
-    let tasks;
-    const SCOPE = ['https://www.googleapis.com/auth/tasks'];
-    try{
-        const jwtClient = new google.auth.JWT(
-                            GOOGLE_CLIENT_EMAIL, 
-                            undefined, 
-                            GOOGLE_PRIVATE_KEY, 
-                            SCOPE);
-        await jwtClient.authorize();
-        tasks = google.tasks({
-            version:"v1",
-            auth:jwtClient
-        });
-    } catch(error:any){
-        console.error(error.message,error);
-        console.error("Google認証に失敗しました");
-        throw new Error("Google認証に失敗しました");
-    }
-    return tasks;
 }
