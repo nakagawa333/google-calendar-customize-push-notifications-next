@@ -10,30 +10,10 @@ import { Tasks } from './components/tasks';
 export default function Home() {
   const [count, setCount] = useState<number>(0);
   const [calendars,setCalendars] = useState([]);
-  const [events,setEvents] = useState([]);
-  const [tasks,setTasks] = useState([]);
   //0:イベント 1:タスク
   const [selectType,setSelectType] = useState<number>(0);
 
-
-  useEffect(() => {
-
-    getGoogleCalendar();
-  },[])
-
-  const getGoogleCalendar = async() => {
-    let timeMin:string = new Date().toISOString();
-    try{
-      let searchParams = new URLSearchParams();
-      searchParams.set("timeMin",timeMin);
-      const res = await axios.get(`/api/getGoogleCalendar?${searchParams}`);
-      setEvents(res.data.events);
-      setTasks(res.data.tasks);
-
-    } catch(error){
-      console.error("Error Fetching data;",error);
-    }
-  }
+  const taskLimist:number = 10;
 
   const selectTypeClick = (selectType:number) => {
     setSelectType(selectType);
@@ -69,9 +49,9 @@ export default function Home() {
       </div>
         {
           selectType === 0 ? (
-            <Events events={events} />
+            <Events />
           ) : selectType === 1 ? (
-            <Tasks tasks={tasks} />
+            <Tasks />
           ) : (
             <></>
           )

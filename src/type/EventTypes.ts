@@ -1,4 +1,5 @@
 type EventTypes = {
+    id:string | null | undefined
     status:string | null | undefined, //ステータス
     summary:string | null | undefined, //タイトル
     eventType:string | null | undefined,//イベント種別

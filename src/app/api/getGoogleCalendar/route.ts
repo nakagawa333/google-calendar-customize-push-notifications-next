@@ -54,6 +54,7 @@ export async function GET(request: NextRequest){
             }
 
             eventItems.push({
+                id:event.id,
                 status:event.status,
                 summary:event.summary,
                 eventType:event.eventType,
@@ -63,19 +64,7 @@ export async function GET(request: NextRequest){
         }
     }
 
-    //Google task取得処理
-    let reqUrl:string = `https://script.google.com/macros/s/${process.env.NEXT_PUBLIC_GET_GOOGLE_TASKS_API_ID}/exec`;
-    const res = await axios.get(reqUrl);
-    let tasks = res.data?.tasks;
-
-    let response = {
-        "events":eventItems,
-        "tasks":tasks
-    }
-
-    //TODO 取得したタスクIDから、タスクを取得
-
-    return NextResponse.json(response);
+    return NextResponse.json(eventItems);
 }
 
 /**
