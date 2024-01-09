@@ -55,9 +55,11 @@ export const Tasks = (props:Props) => {
         let indexTasks = copyTasks[index];
         copyTasks[dragTaskIndex] = indexTasks;
         copyTasks[index] = dragTasks;
-        let map = new Map(tasksMap);
+        const copyTaskMap = new Map(tasksMap);
+        copyTaskMap.set(page,copyTasks)
+
         // setTasks(copyTasks);
-        setTasksMap(map);
+        setTasksMap(copyTaskMap);
         setDragTaskIndex(index);
     }
 
